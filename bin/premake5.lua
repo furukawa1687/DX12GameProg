@@ -107,6 +107,21 @@ config_project("hlsl++", "StaticLib")
 		path.join(SOURCE_PATH, "include/*.natvis"),
 	}
 	
+-----------------------------------------------------------------
+-- imgui
+-----------------------------------------------------------------
+config_project("imugi", "StaticLib")
+	local SOURCE_PATH = "../opensource/imgui"
+	
+	files 
+	{
+		path.join(SOURCE_PATH, "include/*.h"),
+		path.join(SOURCE_PATH, "include/*.cpp"),
+		path.join(SOURCE_PATH, "include/backends/imgui_impl_win32.h"),
+		path.join(SOURCE_PATH, "include/backends/imgui_impl_win32.cpp"),
+		path.join(SOURCE_PATH, "include/backends/imgui_impl_dx12.h"),
+		path.join(SOURCE_PATH, "include/backends/imgui_impl_dx12.cpp"),
+	}
 --============================================================================
 -- プロジェクトファイル
 --============================================================================
