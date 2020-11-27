@@ -52,6 +52,12 @@
 #include "hlslpp/include/hlsl++.h"
 using namespace hlslpp;
 
+// imgui
+#include "imgui/imgui.h"
+#include "imgui/backends/imgui_impl_win32.h"
+#include "imgui/backends/imgui_impl_dx12.h"
+
+
 #pragma warning(pop)
 //@}
 //--------------------------------------------------------------
