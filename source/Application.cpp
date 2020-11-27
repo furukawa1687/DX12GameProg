@@ -4,8 +4,8 @@
 //---------------------------------------------------------------------------
 #include "Application.h"
 #include "Dx12Wrapper.h"
-#include "PMDRenderer.h"
-#include "PMDActor.h"
+#include "pmd_renderer.h"
+#include "pmd_actor.h"
 
 //ウィンドウ定数
 const unsigned int window_width  = 1280;
@@ -14,10 +14,12 @@ const unsigned int window_height = 720;
 //面倒だけど書かなあかんやつ
 LRESULT WindowProcedure(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
+
     if(msg == WM_DESTROY) {   //ウィンドウが破棄されたら呼ばれます
         PostQuitMessage(0);   //OSに対して「もうこのアプリは終わるんや」と伝える
         return 0;
     }
+
     return DefWindowProc(hwnd, msg, wparam, lparam);   //規定の処理を行う
 }
 
@@ -101,7 +103,7 @@ bool Application::Init()
     //DirectX12ラッパー生成＆初期化
     _dx12.reset(new Dx12Wrapper(_hwnd));
     _pmdRenderer.reset(new PMDRenderer(*_dx12));
-    _pmdActor.reset(new PMDActor("Model/初音ミク.pmd", *_pmdRenderer));
+    _pmdActor.reset(new PMDActor("../resource/model/初音ミク.pmd", *_pmdRenderer));
 
     return true;
 }
