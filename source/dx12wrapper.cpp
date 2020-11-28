@@ -144,6 +144,13 @@ Dx12Wrapper::Dx12Wrapper(HWND hwnd)
         assert(0);
         return;
     }
+
+        	//初期化時に呼び出す
+    _heapForImgui = CreateDescriptorHeapForImgui();
+    if(_heapForImgui == nullptr) {
+        assert(0);
+        return;
+    }
 }
 
 HRESULT
@@ -203,11 +210,7 @@ Dx12Wrapper::CreateDepthStencilView()
     dsvDesc.Flags                         = D3D12_DSV_FLAG_NONE;             //フラグは特になし
     _dev->CreateDepthStencilView(_depthBuffer.Get(), &dsvDesc, _dsvHeap->GetCPUDescriptorHandleForHeapStart());
 
-    	//初期化時に呼び出す
-    _heapForImgui = CreateDescriptorHeapForImgui();
-    if(_heapForImgui == nullptr) {
-        return false;
-    }
+
 }
 
 Dx12Wrapper::~Dx12Wrapper()

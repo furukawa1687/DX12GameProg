@@ -93,7 +93,7 @@ public:
     com_ptr<ID3D12Device>              Device();        //デバイス
     com_ptr<ID3D12GraphicsCommandList> CommandList();   //コマンドリスト
     com_ptr<IDXGISwapChain4>           Swapchain();     //スワップチェイン
-    com_ptr<ID3D12DescriptorHeap>       GetHeapForImgui();
+    com_ptr<ID3D12DescriptorHeap>      GetHeapForImgui();
 
     void SetScene();
 };

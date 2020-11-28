@@ -74,13 +74,13 @@ void Application::Run()
         }
 
         // imugiのフレーム初期化
-		ImGui_ImplDX12_NewFrame();
-        ImGui_ImplWin32_NewFrame();
-        ImGui::NewFrame();
+		//ImGui_ImplDX12_NewFrame();
+  //      ImGui_ImplWin32_NewFrame();
+  //      ImGui::NewFrame();
 
-        ImGui::Begin("Rendering Test Menu");
-        ImGui::SetWindowSize(ImVec2(400, 500), ImGuiCond_::ImGuiCond_FirstUseEver);
-        ImGui::End();
+  //      ImGui::Begin("Rendering Test Menu");
+  //      ImGui::SetWindowSize(ImVec2(400, 500), ImGuiCond_::ImGuiCond_FirstUseEver);
+  //      ImGui::End();
 
         //全体の描画準備
         _dx12->BeginDraw();
