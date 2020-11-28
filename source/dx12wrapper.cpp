@@ -202,6 +202,12 @@ Dx12Wrapper::CreateDepthStencilView()
     dsvDesc.ViewDimension                 = D3D12_DSV_DIMENSION_TEXTURE2D;   //2Dテクスチャ
     dsvDesc.Flags                         = D3D12_DSV_FLAG_NONE;             //フラグは特になし
     _dev->CreateDepthStencilView(_depthBuffer.Get(), &dsvDesc, _dsvHeap->GetCPUDescriptorHandleForHeapStart());
+
+    	//初期化時に呼び出す
+    _heapForImgui = CreateDescriptorHeapForImgui();
+    if(_heapForImgui == nullptr) {
+        return false;
+    }
 }
 
 Dx12Wrapper::~Dx12Wrapper()
@@ -282,6 +288,18 @@ Dx12Wrapper::CreateTextureFromFile(const char* texpath)
     }
 
     return texbuff;
+}
+
+com_ptr<ID3D12DescriptorHeap> Dx12Wrapper::CreateDescriptorHeapForImgui()
+{
+    com_ptr<ID3D12DescriptorHeap> ret;
+    D3D12_DESCRIPTOR_HEAP_DESC    desc = {};
+    desc.Flags                         = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+    desc.NodeMask                      = 0;
+    desc.NumDescriptors                = 1;
+    desc.Type                          = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+    _dev->CreateDescriptorHeap(&desc, IID_PPV_ARGS(ret.ReleaseAndGetAddressOf()));
+    return ret;
 }
 
 HRESULT
@@ -558,4 +576,10 @@ com_ptr<IDXGISwapChain4>
 Dx12Wrapper::Swapchain()
 {
     return _swapchain;
+}
+
+com_ptr<ID3D12DescriptorHeap> Dx12Wrapper::GetHeapForImgui()
+{
+
+    return _heapForImgui;
 }

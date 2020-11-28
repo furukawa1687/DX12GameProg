@@ -76,6 +76,9 @@ class Dx12Wrapper
     //テクスチャ名からテクスチャバッファ作成、中身をコピー
     ID3D12Resource* CreateTextureFromFile(const char* texpath);
 
+    com_ptr<ID3D12DescriptorHeap> CreateDescriptorHeapForImgui();
+    com_ptr<ID3D12DescriptorHeap> _heapForImgui;
+
 public:
     Dx12Wrapper(HWND hwnd);
     ~Dx12Wrapper();
@@ -90,6 +93,7 @@ public:
     com_ptr<ID3D12Device>              Device();        //デバイス
     com_ptr<ID3D12GraphicsCommandList> CommandList();   //コマンドリスト
     com_ptr<IDXGISwapChain4>           Swapchain();     //スワップチェイン
+    com_ptr<ID3D12DescriptorHeap>       GetHeapForImgui();
 
     void SetScene();
 };
