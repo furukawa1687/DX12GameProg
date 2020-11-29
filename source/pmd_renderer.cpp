@@ -132,7 +132,7 @@ PMDRenderer::CreateGraphicsPipelineForPMD()
     com_ptr<ID3DBlob> vsBlob    = nullptr;
     com_ptr<ID3DBlob> psBlob    = nullptr;
     com_ptr<ID3DBlob> errorBlob = nullptr;
-    auto             result    = D3DCompileFromFile(L"BasicVertexShader.hlsl",
+    auto             result    = D3DCompileFromFile(L"BasicVertexShader.fx",
                                      nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
                                      "BasicVS", "vs_5_0",
                                      D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
@@ -141,7 +141,7 @@ PMDRenderer::CreateGraphicsPipelineForPMD()
         assert(0);
         return result;
     }
-    result = D3DCompileFromFile(L"BasicPixelShader.hlsl",
+    result = D3DCompileFromFile(L"BasicPixelShader.fx",
                                 nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
                                 "BasicPS", "ps_5_0",
                                 D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,

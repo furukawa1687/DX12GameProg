@@ -145,12 +145,6 @@ Dx12Wrapper::Dx12Wrapper(HWND hwnd)
         return;
     }
 
-        	//初期化時に呼び出す
-    _heapForImgui = CreateDescriptorHeapForImgui();
-    if(_heapForImgui == nullptr) {
-        assert(0);
-        return;
-    }
 }
 
 HRESULT
@@ -291,18 +285,6 @@ Dx12Wrapper::CreateTextureFromFile(const char* texpath)
     }
 
     return texbuff;
-}
-
-com_ptr<ID3D12DescriptorHeap> Dx12Wrapper::CreateDescriptorHeapForImgui()
-{
-    com_ptr<ID3D12DescriptorHeap> ret;
-    D3D12_DESCRIPTOR_HEAP_DESC    desc = {};
-    desc.Flags                         = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-    desc.NodeMask                      = 0;
-    desc.NumDescriptors                = 1;
-    desc.Type                          = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-    _dev->CreateDescriptorHeap(&desc, IID_PPV_ARGS(ret.ReleaseAndGetAddressOf()));
-    return ret;
 }
 
 HRESULT
@@ -581,8 +563,5 @@ Dx12Wrapper::Swapchain()
     return _swapchain;
 }
 
-com_ptr<ID3D12DescriptorHeap> Dx12Wrapper::GetHeapForImgui()
-{
 
-    return _heapForImgui;
-}
+

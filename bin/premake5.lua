@@ -126,7 +126,6 @@ config_project("D3D12Sample", "WindowedApp")
 		path.join("../opensource/imgui","*.h"),
 		path.join("../opensource/imgui","*.cpp"),
 		path.join("../resource", "**.fx"),	-- シェーダー
-
 	}
 	
 	-- "" インクルードパス
@@ -155,8 +154,9 @@ config_project("D3D12Sample", "WindowedApp")
 
 	-- フォルダ分け
 	vpaths {
-		["imgui"] = {"../opensource/imgui/**.h","../opensource/imgui/**.cpp"},
-		["ヘッダー ファイル"] = { "../**.h", "../**.hxx", "../**.hpp", "../**.inl" },
+		["imguih"] = {"../opensource/imgui/**.h"},
+		["imguicpp"] = {"../opensource/imgui/**.cpp"},
+		["ヘッダー ファイル"] = { "../**.h","../**.hxx","../**.hpp", "../**.inl" },
 		["ソース ファイル"]   = { "../**.c", "../**.cxx", "../**.cpp" },
 	}
 

@@ -1,4 +1,4 @@
-#include"BasicType.hlsli"
+#include"BasicType.fx"
 
 Texture2D<float4> tex:register(t0);//0番スロットに設定されたテクスチャ(ベース)
 Texture2D<float4> sph:register(t1);//1番スロットに設定されたテクスチャ(乗算)
@@ -16,9 +16,6 @@ cbuffer Material : register(b2) {
 	float4 specular;//スペキュラ
 	float3 ambient;//アンビエント
 };
-
-
-
 
 float4 BasicPS(BasicType input ) : SV_TARGET{
 	float3 light = normalize(float3(1,-1,1));//光の向かうベクトル(平行光線)

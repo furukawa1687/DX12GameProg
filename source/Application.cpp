@@ -73,15 +73,6 @@ void Application::Run()
             break;
         }
 
-        // imugiのフレーム初期化
-		//ImGui_ImplDX12_NewFrame();
-  //      ImGui_ImplWin32_NewFrame();
-  //      ImGui::NewFrame();
-
-  //      ImGui::Begin("Rendering Test Menu");
-  //      ImGui::SetWindowSize(ImVec2(400, 500), ImGuiCond_::ImGuiCond_FirstUseEver);
-  //      ImGui::End();
-
         //全体の描画準備
         _dx12->BeginDraw();
 
@@ -120,12 +111,7 @@ bool Application::Init()
         assert(0);
         return false;
     }
-    blnResult = ImGui_ImplDX12_Init(_dx12->Device().Get(),                                                   //DirectX12デバイス
-                                    1,                                                                 //frames_in_flightと説明にはあるがflightの意味が掴めず(後述)
-                                    DXGI_FORMAT_R8G8B8A8_UNORM,                                        //書き込み先RTVのフォーマット
-                                    _dx12->GetHeapForImgui().Get(),                                    //imgui用デスクリプタヒープ
-                                    _dx12->GetHeapForImgui()->GetCPUDescriptorHandleForHeapStart(),    //CPUハンドル
-                                    _dx12->GetHeapForImgui()->GetGPUDescriptorHandleForHeapStart());   //GPUハンドル
+    
 
 
     //DirectX12ラッパー生成＆初期化
