@@ -54,6 +54,30 @@ void* PMDActor::Transform::operator new(size_t size)
     return _aligned_malloc(size, 16);
 }
 
+void PMDActor::MotionUpdate()
+{
+    auto  armnode = _boneNodeTable["左腕"];
+    auto& armpos  = armnode.startPos;
+
+    auto armmat = XMMatrixTranslation(-armpos.x, -armpos.y, -armpos.z)   // 腕のボーン基準点を原点へ戻す
+                                  * XMMatrixRotationZ(XM_PIDIV2)                   // 回転
+                  * XMMatrixTranslation(armpos.x, armpos.y, armpos.z);   // 腕のボーン基準点を元の場所へ戻す
+    
+    auto  elbownode = _boneNodeTable["左ひじ"];
+    auto& elbowpos  = elbownode.startPos;
+
+    auto elbowmat = XMMatrixTranslation(-elbowpos.x, -elbowpos.y, -elbowpos.z)   // 腕のボーン基準点を原点へ戻す
+               * XMMatrixRotationZ(-XM_PIDIV2)                // 回転
+                    * XMMatrixTranslation(elbowpos.x, elbowpos.y, elbowpos.z);   // 腕のボーン基準点を元の場所へ戻す
+    
+    _boneMatrices[armnode.boneIdx] = armmat;
+    _boneMatrices[elbownode.boneIdx] = elbowmat;
+
+    RecursiveMatrixMultiply(&_boneNodeTable["センター"], XMMatrixIdentity());
+
+    std::copy(_boneMatrices.begin(), _boneMatrices.end(), _mappedMatrices + 1);
+}
+
 PMDActor::PMDActor(const char* filepath, PMDRenderer& renderer)
 : _renderer(renderer)
 , _dx12(renderer._dx12)
@@ -64,6 +88,7 @@ PMDActor::PMDActor(const char* filepath, PMDRenderer& renderer)
     CreateTransformView();
     CreateMaterialData();
     CreateMaterialAndTextureView();
+    MotionUpdate();
 }
 
 PMDActor::~PMDActor()
@@ -253,24 +278,24 @@ PMDActor::LoadPMDFile(const char* path)
     // 読み込み用ボーン構造体
     struct Bone
     {
-        char          boneName[20]; //! ボーン名
-        u16           parentNo;      //! 親ボーン番号
-        u16           nextNo;       //! 先頭のボーン番号
-        unsigned char type;         //! ボーン種別
-        u16           ikBoneNo;     //! IKボーン番号
-        XMFLOAT3      pos;          //! ボーンの基準点座標
+        char          boneName[20];   //! ボーン名
+        u16           parentNo;       //! 親ボーン番号
+        u16           nextNo;         //! 先頭のボーン番号
+        unsigned char type;           //! ボーン種別
+        u16           ikBoneNo;       //! IKボーン番号
+        XMFLOAT3      pos;            //! ボーンの基準点座標
     };
 #pragma pack()
-    vector<Bone> pmdBones(boneNum);  // ボーンの個数分ボーン構造体を作成
+    vector<Bone> pmdBones(boneNum);   // ボーンの個数分ボーン構造体を作成
     fread(pmdBones.data(), sizeof(Bone), boneNum, fp);
     fclose(fp);
-    
+
     // インデックスと名前の対応関係構築のために後で使う
     vector<string> boneNames(pmdBones.size());
-    
+
     // ボーンノードテーブルにボーンインデックスと基準点のデータを置く
-    for (int idx = 0; idx < pmdBones.size(); ++idx) {
-        auto& pmdBone = pmdBones[idx];
+    for(int idx = 0; idx < pmdBones.size(); ++idx) {
+        auto& pmdBone  = pmdBones[idx];
         boneNames[idx] = pmdBone.boneName;
         auto& node     = _boneNodeTable[pmdBone.boneName];
         node.boneIdx   = idx;
@@ -290,6 +315,14 @@ PMDActor::LoadPMDFile(const char* path)
     // ボーンマテリアルのサイズを指定して初期化する
     _boneMatrices.resize(pmdBones.size());
     std::fill(_boneMatrices.begin(), _boneMatrices.end(), XMMatrixIdentity());
+}
+
+void PMDActor::RecursiveMatrixMultiply(BoneNode* node, DirectX::XMMATRIX& mat)
+{
+    _boneMatrices[node->boneIdx] = mat;
+    for(auto& cnode : node->children) {
+        RecursiveMatrixMultiply(cnode, _boneMatrices[cnode->boneIdx] * mat);
+    }
 }
 
 HRESULT

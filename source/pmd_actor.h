@@ -99,8 +99,11 @@ private:
 
     //PMDファイルのロード
     HRESULT LoadPMDFile(const char* path);
-
+    void    RecursiveMatrixMultiply(BoneNode* node, DirectX::XMMATRIX& mat);
     float _angle;   //テスト用Y軸回転
+
+    void MotionUpdate();
+
 public:
     PMDActor(const char* filepath, PMDRenderer& renderer);
     ~PMDActor();
