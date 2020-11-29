@@ -19,16 +19,16 @@ private:
     PMDRenderer& _renderer;
     Dx12Wrapper& _dx12;
     template<typename T>
-    using ComPtr = Microsoft::WRL::ComPtr<T>;
+    using com_ptr = Microsoft::WRL::ComPtr<T>;
 
     //頂点関連
-    ComPtr<ID3D12Resource>   _vb     = nullptr;
-    ComPtr<ID3D12Resource>   _ib     = nullptr;
+    com_ptr<ID3D12Resource>   _vb     = nullptr;
+    com_ptr<ID3D12Resource>   _ib     = nullptr;
     D3D12_VERTEX_BUFFER_VIEW _vbView = {};
     D3D12_INDEX_BUFFER_VIEW  _ibView = {};
 
-    ComPtr<ID3D12Resource>       _transformMat  = nullptr;   //座標変換行列(今はワールドのみ)
-    ComPtr<ID3D12DescriptorHeap> _transformHeap = nullptr;   //座標変換ヒープ
+    com_ptr<ID3D12Resource>       _transformMat  = nullptr;   //座標変換行列(今はワールドのみ)
+    com_ptr<ID3D12DescriptorHeap> _transformHeap = nullptr;   //座標変換ヒープ
 
     //シェーダ側に投げられるマテリアルデータ
     struct MaterialForHlsl
@@ -62,22 +62,35 @@ private:
         DirectX::XMMATRIX world;
     };
 
+
     Transform              _transform;
-    Transform*             _mappedTransform = nullptr;
-    ComPtr<ID3D12Resource> _transformBuff   = nullptr;
+    DirectX::XMMATRIX*     _mappedMatrices = nullptr;
+    com_ptr<ID3D12Resource> _transformBuff   = nullptr;
 
     //マテリアル関連
     std::vector<Material>               _materials;
-    ComPtr<ID3D12Resource>              _materialBuff = nullptr;
-    std::vector<ComPtr<ID3D12Resource>> _textureResources;
-    std::vector<ComPtr<ID3D12Resource>> _sphResources;
-    std::vector<ComPtr<ID3D12Resource>> _spaResources;
-    std::vector<ComPtr<ID3D12Resource>> _toonResources;
+    com_ptr<ID3D12Resource>              _materialBuff = nullptr;
+    std::vector<com_ptr<ID3D12Resource>> _textureResources;
+    std::vector<com_ptr<ID3D12Resource>> _sphResources;
+    std::vector<com_ptr<ID3D12Resource>> _spaResources;
+    std::vector<com_ptr<ID3D12Resource>> _toonResources;
+
+    // ボーン関連
+    std::vector<DirectX::XMMATRIX> _boneMatrices; 
+
+    struct BoneNode
+    {
+        u32 boneIdx;                        // ボーンインデックス
+        DirectX::XMFLOAT3 startPos;         // ボーン基準点（回転中心）
+        std::vector<BoneNode*> children;    // 子ノード
+    };
+
+    std::map<std::string, BoneNode> _boneNodeTable;
 
     //読み込んだマテリアルをもとにマテリアルバッファを作成
     HRESULT CreateMaterialData();
 
-    ComPtr<ID3D12DescriptorHeap> _materialHeap = nullptr;   //マテリアルヒープ(5個ぶん)
+    com_ptr<ID3D12DescriptorHeap> _materialHeap = nullptr;   //マテリアルヒープ(5個ぶん)
     //マテリアル＆テクスチャのビューを作成
     HRESULT CreateMaterialAndTextureView();
 

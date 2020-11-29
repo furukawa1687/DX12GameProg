@@ -2,7 +2,6 @@
 //!	@file	pmd_actor.cpp
 //!	@brief	PMDアクター
 //---------------------------------------------------------------------------
-#include "pmd_actor.h"
 #include "pmd_renderer.h"
 #include "Dx12Wrapper.h"
 #include <d3dx12.h>
@@ -246,14 +245,58 @@ PMDActor::LoadPMDFile(const char* path)
             _spaResources[i] = _dx12.GetTextureByPath(spaFilePath.c_str());
         }
     }
+
+    // スキニングデータ
+    u16 boneNum = 0;
+    fread(&boneNum, sizeof(boneNum), 1, fp);
+#pragma pack(1)
+    // 読み込み用ボーン構造体
+    struct Bone
+    {
+        char          boneName[20]; //! ボーン名
+        u16           parentNo;      //! 親ボーン番号
+        u16           nextNo;       //! 先頭のボーン番号
+        unsigned char type;         //! ボーン種別
+        u16           ikBoneNo;     //! IKボーン番号
+        XMFLOAT3      pos;          //! ボーンの基準点座標
+    };
+#pragma pack()
+    vector<Bone> pmdBones(boneNum);  // ボーンの個数分ボーン構造体を作成
+    fread(pmdBones.data(), sizeof(Bone), boneNum, fp);
     fclose(fp);
+    
+    // インデックスと名前の対応関係構築のために後で使う
+    vector<string> boneNames(pmdBones.size());
+    
+    // ボーンノードテーブルにボーンインデックスと基準点のデータを置く
+    for (int idx = 0; idx < pmdBones.size(); ++idx) {
+        auto& pmdBone = pmdBones[idx];
+        boneNames[idx] = pmdBone.boneName;
+        auto& node     = _boneNodeTable[pmdBone.boneName];
+        node.boneIdx   = idx;
+        node.startPos  = pmdBone.pos;
+    }
+
+    // 親子関係の構築（チャイルドを埋めていく）
+    for(auto& pb : pmdBones) {
+        // 親インデックスをチェック（ありえない番号なら都バス）
+        if(pb.parentNo >= pmdBones.size()) {
+            continue;
+        }
+        auto parentName = boneNames[pb.parentNo];
+        _boneNodeTable[parentName].children.emplace_back(&_boneNodeTable[pb.boneName]);
+    }
+
+    // ボーンマテリアルのサイズを指定して初期化する
+    _boneMatrices.resize(pmdBones.size());
+    std::fill(_boneMatrices.begin(), _boneMatrices.end(), XMMatrixIdentity());
 }
 
 HRESULT
 PMDActor::CreateTransformView()
 {
     //GPUバッファ作成
-    auto buffSize = sizeof(Transform);
+    auto buffSize = sizeof(XMMATRIX) * (1 + _boneMatrices.size());
     buffSize      = (buffSize + 0xff) & ~0xff;
     auto result   = _dx12.Device()->CreateCommittedResource(
         &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
@@ -268,12 +311,13 @@ PMDActor::CreateTransformView()
     }
 
     //マップとコピー
-    result = _transformBuff->Map(0, nullptr, (void**)&_mappedTransform);
+    result = _transformBuff->Map(0, nullptr, (void**)&_mappedMatrices);
     if(FAILED(result)) {
         assert(SUCCEEDED(result));
         return result;
     }
-    *_mappedTransform = _transform;
+    _mappedMatrices[0] = _transform.world;
+    std::copy(_boneMatrices.begin(), _boneMatrices.end(), _mappedMatrices + 1);
 
     //ビューの作成
     D3D12_DESCRIPTOR_HEAP_DESC transformDescHeapDesc = {};
@@ -405,8 +449,8 @@ PMDActor::CreateMaterialAndTextureView()
 
 void PMDActor::Update()
 {
-    _angle += 0.03f;
-    _mappedTransform->world = XMMatrixRotationY(_angle);
+    _angle += 0.01f;
+    _mappedMatrices[0] = XMMatrixRotationY(_angle);
 }
 void PMDActor::Draw()
 {

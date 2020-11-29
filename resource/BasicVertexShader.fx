@@ -15,6 +15,7 @@ cbuffer SceneData : register(b0) {
 };
 cbuffer Transform : register(b1) {
 	matrix world;//ワールド変換行列
+	matrix bones[256];
 }
 
 //定数バッファ1
@@ -26,8 +27,9 @@ cbuffer Material : register(b2) {
 };
 
 
-BasicType BasicVS(float4 pos : POSITION , float4 normal : NORMAL, float2 uv : TEXCOORD) {
+BasicType BasicVS(float4 pos : POSITION , float4 normal : NORMAL, float2 uv : TEXCOORD , min16uint2 boneno : BONENO) {
 	BasicType output;//ピクセルシェーダへ渡す値
+	pos = mul(bones[boneno[0]], pos);
 	pos = mul(world, pos);
 	output.svpos = mul(mul(proj,view),pos);//シェーダでは列優先なので注意
 	output.pos = mul(view, pos);

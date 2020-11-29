@@ -28,6 +28,7 @@
 #include <array>
 #include <string>
 #include <string_view>
+#include <map>
 
 //@}
 //--------------------------------------------------------------
@@ -68,7 +69,7 @@ using namespace hlslpp;
 #include "typedef.h"        // 型定義
 #include "debug.h"          // デバッグ関連
 #include "math_Matrix.h"    // 行列ユーティリティー
-
+#include "pmd_actor.h"
 #include "main.h"   // アプリケーション開始
 
 //@}
