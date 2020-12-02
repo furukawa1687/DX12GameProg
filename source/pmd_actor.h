@@ -8,7 +8,8 @@
 #include <DirectXMath.h>
 #include <vector>
 #include <wrl.h>
-
+#include <mmsystem.h>
+#pragma comment(lib, "winmm.lib")
 class Dx12Wrapper;
 class PMDRenderer;
 class PMDActor
@@ -87,6 +88,22 @@ private:
 
     std::map<std::string, BoneNode> _boneNodeTable;
 
+    // キーフレーム構造体
+    struct KeyFrame
+    {
+        u32 frameNo;
+        DirectX::XMVECTOR quaternion;
+        DirectX::XMFLOAT2 p1, p2;   //ベジェの中間コントロールポイント
+        // コンストラクタ
+        KeyFrame(u32 fno, DirectX::XMVECTOR& q, const DirectX::XMFLOAT2& ip1, const DirectX::XMFLOAT2& ip2)
+        : frameNo(fno),
+        quaternion(q),
+        p1(ip1),
+        p2(ip2){}
+    };
+
+    std::unordered_map<std::string, std::vector<KeyFrame>> _motionData;
+
     //読み込んだマテリアルをもとにマテリアルバッファを作成
     HRESULT CreateMaterialData();
 
@@ -100,8 +117,11 @@ private:
     //PMDファイルのロード
     HRESULT LoadPMDFile(const char* path);
     void    RecursiveMatrixMultiply(BoneNode* node, DirectX::XMMATRIX& mat);
-    float _angle;   //テスト用Y軸回転
+    f32 _angle;   //テスト用Y軸回転
 
+	f32 GetYFromXOnBezier(f32 x, const DirectX::XMFLOAT2& a, const DirectX::XMFLOAT2& b, uint8_t n = 12);
+
+    DWORD _startTime;
     void MotionUpdate();
 
 public:
@@ -109,6 +129,8 @@ public:
     ~PMDActor();
     ///クローンは頂点およびマテリアルは共通のバッファを見るようにする
     PMDActor* Clone();
+    void      LoadVMDFile(const char* filepath, const char* name);
     void      Update();
     void      Draw();
+    void PlayAnimation();
 };

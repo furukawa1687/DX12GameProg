@@ -118,7 +118,8 @@ bool Application::Init()
     _dx12.reset(new Dx12Wrapper(_hwnd));
     _pmdRenderer.reset(new PMDRenderer(*_dx12));
     _pmdActor.reset(new PMDActor("../resource/model/初音ミク.pmd", *_pmdRenderer));
-
+    _pmdActor->LoadVMDFile("../resource/motion/yagokoro.vmd", "pose");
+    _pmdActor->PlayAnimation();
     return true;
 }
 

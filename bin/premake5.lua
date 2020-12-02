@@ -107,7 +107,19 @@ config_project("hlsl++", "StaticLib")
 		path.join(SOURCE_PATH, "include/*.natvis"),
 	}
 	
+-----------------------------------------------------------------
+-- imgui
+-----------------------------------------------------------------
+config_project("imgui", "StaticLib")
 
+	local SOURCE_PATH = "../opensource/imgui"
+
+	files
+	{
+		path.join(SOURCE_PATH, "*.h"),
+		path.join(SOURCE_PATH, "*.cpp"),
+	}
+	
 --============================================================================
 -- プロジェクトファイル
 --============================================================================
@@ -123,8 +135,6 @@ config_project("D3D12Sample", "WindowedApp")
     files {
 		path.join(SOURCE_PATH, "**.h"),
 		path.join(SOURCE_PATH, "**.cpp"),
-		path.join("../opensource/imgui","*.h"),
-		path.join("../opensource/imgui","*.cpp"),
 		path.join("../resource", "**.fx"),	-- シェーダー
 	}
 	
@@ -154,8 +164,6 @@ config_project("D3D12Sample", "WindowedApp")
 
 	-- フォルダ分け
 	vpaths {
-		["imguih"] = {"../opensource/imgui/**.h"},
-		["imguicpp"] = {"../opensource/imgui/**.cpp"},
 		["ヘッダー ファイル"] = { "../**.h","../**.hxx","../**.hpp", "../**.inl" },
 		["ソース ファイル"]   = { "../**.c", "../**.cxx", "../**.cpp" },
 	}
@@ -164,4 +172,5 @@ config_project("D3D12Sample", "WindowedApp")
 	links {
 		"DirectXTex",
 		"DirectXTK12",
+		"imgui",
 	}
