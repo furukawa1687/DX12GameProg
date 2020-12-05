@@ -47,6 +47,19 @@ std::string GetTexturePathFromModelAndTexPath(const std::string& modelPath, cons
     auto folderPath = modelPath.substr(0, pathIndex + 1);
     return folderPath + texPath;
 }
+
+enum class BoneType
+{
+    Rotation,        //回転
+    RotAndMove,      //回転&移動
+    IK,              //IK
+    Undefined,       //未定義
+    IKChild,         //IK影響ボーン
+    RotationChild,   //回転影響ボーン
+    IKDestination,   //IK接続先
+    Invisible        //見えないボーン
+};
+
 }   // namespace
 
 void* PMDActor::Transform::operator new(size_t size)
@@ -58,7 +71,6 @@ void PMDActor::MotionUpdate()
 {
     auto         elapsedTime = timeGetTime() - _startTime;   //経過時間を測る
     unsigned int frameNo     = 30 * (elapsedTime / 1000.0f);
-
 
     // 行列情報のクリア
     std::fill(_boneMatrices.begin(), _boneMatrices.end(), XMMatrixIdentity());
@@ -86,16 +98,14 @@ void PMDActor::MotionUpdate()
             rotation = XMMatrixRotationQuaternion(rit->quaternion);
         }
 
-
         auto& pos = node.startPos;
         auto  mat = XMMatrixTranslation(-pos.x, -pos.y, -pos.z)   // 腕のボーン基準点を原点へ戻す
-                   * rotation                 // 回転
+                   * rotation                                     // 回転
                    * XMMatrixTranslation(pos.x, pos.y, pos.z);    // 腕のボーン基準点を元の場所へ戻す
 
         _boneMatrices[node.boneIdx] = mat;
     }
 
-    
     RecursiveMatrixMultiply(&_boneNodeTable["センター"], XMMatrixIdentity());
 
     std::copy(_boneMatrices.begin(), _boneMatrices.end(), _mappedMatrices + 1);
@@ -310,18 +320,38 @@ PMDActor::LoadPMDFile(const char* path)
 #pragma pack()
     vector<Bone> pmdBones(boneNum);   // ボーンの個数分ボーン構造体を作成
     fread(pmdBones.data(), sizeof(Bone), boneNum, fp);
+
+    u16 ikNum = 0;
+    fread(&ikNum, sizeof(ikNum), 1, fp);
+    _ikData.resize(ikNum);
+    for(auto& ik : _ikData) {
+        fread(&ik.boneIdx, sizeof(ik.boneIdx), 1, fp);
+        fread(&ik.targetIdx, sizeof(ik.targetIdx), 1, fp);
+        u8 chainLen = 0;
+        fread(&chainLen, sizeof(chainLen), 1, fp);
+        ik.nodeIdxes.resize(chainLen);
+
+        fread(&ik.iterations, sizeof(ik.iterations), 1, fp);
+        fread(&ik.limit, sizeof(ik.limit), 1, fp);
+        if(chainLen == 0)
+            continue;
+        fread(ik.nodeIdxes.data(), sizeof(ik.nodeIdxes[0]), chainLen, fp);
+    }
+
     fclose(fp);
 
     // インデックスと名前の対応関係構築のために後で使う
-    vector<string> boneNames(pmdBones.size());
+    _boneNameArray.resize(pmdBones.size());
+    _boneNodeAddressArray.resize(pmdBones.size());
 
-    // ボーンノードテーブルにボーンインデックスと基準点のデータを置く
+    // ボーンノードテーブルにボーンインデックスと基準点のデータを置くk
     for(int idx = 0; idx < pmdBones.size(); ++idx) {
         auto& pmdBone  = pmdBones[idx];
-        boneNames[idx] = pmdBone.boneName;
         auto& node     = _boneNodeTable[pmdBone.boneName];
         node.boneIdx   = idx;
         node.startPos  = pmdBone.pos;
+        _boneNameArray[idx] = pmdBone.boneName;
+        _boneNodeAddressArray[idx] = &node;
     }
 
     // 親子関係の構築（チャイルドを埋めていく）
@@ -330,13 +360,14 @@ PMDActor::LoadPMDFile(const char* path)
         if(pb.parentNo >= pmdBones.size()) {
             continue;
         }
-        auto parentName = boneNames[pb.parentNo];
+        auto parentName = _boneNameArray[pb.parentNo];
         _boneNodeTable[parentName].children.emplace_back(&_boneNodeTable[pb.boneName]);
     }
 
     // ボーンマテリアルのサイズを指定して初期化する
     _boneMatrices.resize(pmdBones.size());
     std::fill(_boneMatrices.begin(), _boneMatrices.end(), XMMatrixIdentity());
+
 }
 
 void PMDActor::RecursiveMatrixMultiply(BoneNode* node, DirectX::XMMATRIX& mat)
@@ -352,9 +383,9 @@ f32 PMDActor::GetYFromXOnBezier(f32 x, const DirectX::XMFLOAT2& a, const DirectX
     if(a.x == a.y && b.x == b.y)
         return x;   //計算不要
     f32       t  = x;
-    const f32   k0 = 1 + 3 * a.x - 3 * b.x;   //t^3の係数
-    const f32   k1 = 3 * b.x - 6 * a.x;       //t^2の係数
-    const f32   k2 = 3 * a.x;                 //tの係数
+    const f32 k0 = 1 + 3 * a.x - 3 * b.x;   //t^3の係数
+    const f32 k1 = 3 * b.x - 6 * a.x;       //t^2の係数
+    const f32 k2 = 3 * a.x;                 //tの係数
 
     //誤差の範囲内かどうかに使用する定数
     constexpr f32 epsilon = 0.0005f;
@@ -547,12 +578,12 @@ void PMDActor::LoadVMDFile(const char* filepath, const char* name)
 
     for(auto& k : keyframes) {
         fread(k.boneName, sizeof(k.boneName), 1, fp);
-        fread(&k.frameNo, sizeof(k.frameNo)+sizeof(k.location) + sizeof(k.quaternion) + sizeof(k.bezier), 1, fp);
+        fread(&k.frameNo, sizeof(k.frameNo) + sizeof(k.location) + sizeof(k.quaternion) + sizeof(k.bezier), 1, fp);
     }
 
     // VMDのキーフレームデータから、実際に使用するキーフレームテーブルへ変換
     for(auto& f : keyframes) {
-        _motionData[f.boneName].emplace_back(KeyFrame(f.frameNo, XMLoadFloat4(&f.quaternion), XMFLOAT2((f32)f.bezier[3] / 127.0f, (f32)f.bezier[7] / 127.0f),
+        _motionData[f.boneName].emplace_back(KeyFrame(f.frameNo, XMLoadFloat4(&f.quaternion),f.location, XMFLOAT2((f32)f.bezier[3] / 127.0f, (f32)f.bezier[7] / 127.0f),
                                                       XMFLOAT2((f32)f.bezier[11] / 127.0f, (f32)f.bezier[15] / 127.0f)));
     }
 

@@ -87,17 +87,32 @@ private:
     };
 
     std::map<std::string, BoneNode> _boneNodeTable;
+    std::vector<std::string>        _boneNameArray; // ボーン名を格納しておく
+    std::vector<BoneNode*>          _boneNodeAddressArray;// ノードを格納しておく
+
+    struct PMDIK
+    {
+        u16 boneIdx;
+        u16 targetIdx;
+        u16 iterations;
+        f32 limit;
+        std::vector<u16> nodeIdxes;
+    };
+
+    std::vector<PMDIK> _ikData;
 
     // キーフレーム構造体
     struct KeyFrame
     {
         u32 frameNo;
         DirectX::XMVECTOR quaternion;
+        DirectX::XMFLOAT3 offset; // クォータニオン
         DirectX::XMFLOAT2 p1, p2;   //ベジェの中間コントロールポイント
         // コンストラクタ
-        KeyFrame(u32 fno, DirectX::XMVECTOR& q, const DirectX::XMFLOAT2& ip1, const DirectX::XMFLOAT2& ip2)
+        KeyFrame(u32 fno, DirectX::XMVECTOR& q, DirectX::XMFLOAT3& ofs, DirectX::XMFLOAT2& ip1, DirectX::XMFLOAT2& ip2)
         : frameNo(fno),
-        quaternion(q),
+        quaternion(q), 
+        offset(ofs),
         p1(ip1),
         p2(ip2){}
     };
